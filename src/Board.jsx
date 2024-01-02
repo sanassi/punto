@@ -2,29 +2,18 @@ import {useRef, useState} from "react";
 import './Board.css';
 import Tile from "./Tile.jsx";
 import {useContainerDimensions} from "./UseContainerDimensions.jsx";
-import {getRandomIntInclusive} from "./Utils.js";
 
-function initBoard(dimension) {
-    let arr = Array.from({length: dimension * dimension});
-    return arr.map((t, index) => {
-        return {
-            x: Math.floor(index / dimension),
-            y: Math.floor(index % dimension),
-            visible: false,
-            playerColor: '#073b7e'
-        };
-    });
-}
-
-export default function Board() {
+export default function Board({state, dispatch}) {
     let boardRef = useRef(null);
     const dimension = 6;
-    const [board, setBoard] = useState(initBoard(dimension));
 
     const boardDimensions = useContainerDimensions(boardRef);
 
     const onClick = (event) => {
         if (boardRef === null)
+            return;
+
+        if (!state.isMyTurn)
             return;
 
         let boardRect = boardRef.current.getBoundingClientRect();
@@ -33,25 +22,19 @@ export default function Board() {
         clickedTilePos.x = Math.floor(clickedTilePos.x / (boardDimensions.height / dimension));
         clickedTilePos.y = Math.floor(clickedTilePos.y / (boardDimensions.height / dimension));
 
-        setBoard(board.map(
-            (t) => {
-                if (t.x === clickedTilePos.y && t.y === clickedTilePos.x) {
-                    t.visible = true;
-                    return t;
-                }
-                else
-                    return t;
-            }
-        ))
+        // TODO: check if the card can be placed here (ie. if there is a card around x,y)
+        dispatch({ type: 'place_card', payload: {
+            posX: clickedTilePos.y, posY: clickedTilePos.x
+        }});
     }
 
-    const tiles = board.map((t, index) => {
+    const tiles = state.board.map((t, index) => {
         return (
             <Tile
                 key={`tile-${index}`}
                 index={index}
                 visible={t.visible}
-                face={getRandomIntInclusive(1, 6)}
+                face={t.card}
                 color={t.playerColor}
             />
         );
