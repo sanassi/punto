@@ -1,16 +1,18 @@
 import "./Dice.css";
 
-const Pip = () => <span className="pip" />;
+const Pip = (color) => <span className="pip" style={{backgroundColor: color.color }} />;
 
 const Face = ({ children }) => <div className="face">{children}</div>;
 
-const Dice = ({ face }) => {
+const Dice = ({ face, visible, color }) => {
     let pips = Number.isInteger(face)
         ? Array(face)
             .fill(0)
-            .map((_, i) => <Pip key={i} />)
+            .map((_, i) => <Pip key={i} color={color} />)
         : null;
-    return <Face>{pips}</Face>;
+    return <div className="dice" style={{ visibility: visible ? "visible" : "hidden" }}>
+        <Face>{pips}</Face>
+    </div>;
 };
 
 export default Dice;
