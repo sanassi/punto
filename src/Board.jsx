@@ -1,7 +1,9 @@
-import {useRef, useState} from "react";
+import {useRef} from "react";
 import './Board.css';
 import Tile from "./Tile.jsx";
 import {useContainerDimensions} from "./UseContainerDimensions.jsx";
+import {socket} from "../socket.js";
+
 
 export default function Board({state, dispatch}) {
     let boardRef = useRef(null);
@@ -26,6 +28,13 @@ export default function Board({state, dispatch}) {
         dispatch({ type: 'place_card', payload: {
             posX: clickedTilePos.y, posY: clickedTilePos.x
         }});
+
+        socket.emit('played_turn', {
+                x: clickedTilePos.y,
+                y: clickedTilePos.x,
+                color: state.color,
+                card: state.card
+        });
     }
 
     const tiles = state.board.map((t, index) => {

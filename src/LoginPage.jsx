@@ -1,5 +1,7 @@
 import './LoginPage.css';
 import {useState} from "react";
+import { socket } from '../socket.js';
+
 export default function LoginPage({ setLogged, setLogin }) {
     const [tempLogin, updateTempLogin] = useState('');
     return (
@@ -11,8 +13,8 @@ export default function LoginPage({ setLogged, setLogin }) {
                    title="Enter a login"
                    onChange={e => updateTempLogin(e.target.value)} />
             <button onClick={() => {
-                setLogged(true);
                 setLogin(tempLogin);
+                socket.connect();
             }}>
                 Go!
             </button>
