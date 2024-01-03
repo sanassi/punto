@@ -12,6 +12,8 @@ function App() {
 
     const [state, dispatch] = useReducer(reducer,
         {
+            id: '',
+            login: login,
             card: 1,
             color: '#0b6c0b',
             board: [],
@@ -23,6 +25,8 @@ function App() {
             let firstCard = initialCards[initialCards.length - 1];
             initialCards.splice(-1);
             return {
+                id: '',
+                login: initial.login,
                 board: initBoard(6, initial.color),
                 card: firstCard,
                 color: initial.color,
@@ -35,6 +39,7 @@ function App() {
         function onConnect() {
             console.log('loggedIn');
             setLogged(true);
+            state.login = login
             socket.emit('new_connection', login);
         }
 
@@ -55,9 +60,9 @@ function App() {
             });
         }
 
-        function onAssignColor(arg) {
+        function onAssignCredentials(arg) {
             dispatch({
-                type: 'assign_color',
+                type: 'assign_credentials',
                 payload: arg
             });
         }
@@ -68,13 +73,30 @@ function App() {
             });
         }
 
+        function onHasWon() {
+            alert('You won!');
+            dispatch({
+                type: 'has_won'
+            });
+        }
+
+        function onHasLost(gameWinner) {
+            alert('You Lost.. ' + gameWinner + 'won!');
+            dispatch({
+                type: 'has_lost',
+                payload: gameWinner
+            });
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on('login_already_taken', onDisconnect);
         socket.on('no_more_space', onNoMoreSpace);
         socket.on('other_player_played', onOtherPlayed);
-        socket.on('assign_color', onAssignColor);
+        socket.on('assign_credentials', onAssignCredentials);
         socket.on('set_player_turn', onSetMyTurn);
+        socket.on('has_lost', onHasLost);
+        socket.on('has_won', onHasWon);
 
         return () => {
             socket.off('connect', onConnect);
@@ -82,9 +104,10 @@ function App() {
             socket.off('login_already_taken', onDisconnect);
             socket.off('no_more_space', onNoMoreSpace);
             socket.off('other_player_played', onOtherPlayed);
-            socket.off('assign_color', onAssignColor);
+            socket.off('assign_credentials', onAssignCredentials);
             socket.off('set_player_turn', onSetMyTurn);
-
+            socket.off('has_lost', onHasLost);
+            socket.off('has_won', onHasWon);
         }
     }, [login]);
 

@@ -36,10 +36,72 @@ const NUMBER_OF_PLAYERS = 4;
 
 let gameState = {
     users: [],
+    dimension: 6,
     playerColors: ['#c23f3f', '#0b6c0b', '#3e7da9', '#ef9c20'],
     turn: 0,
     board: []
 };
+
+gameState.board = Array.from({length: gameState.dimension * gameState.dimension});
+gameState.board = gameState.board.map((t, index) => {
+    return {
+        x: Math.floor(index / gameState.dimension),
+        y: Math.floor(index % gameState.dimension),
+        played: false,
+        playerColor: '',
+        card: 0,
+    }
+})
+
+function checkWin(color) {
+    let won = false;
+
+    const directions = [
+        { dx: -1, dy: 0 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: -1 },
+        { dx: 0, dy: 1 },
+        { dx: 1, dy: 1},
+        { dx: -1, dy: -1}
+    ];
+
+    for (let i = 0; i < gameState.dimension; i++) {
+        for (let j = 0; j < gameState.dimension; j++) {
+            if (gameState.board[i * gameState.dimension + j].playerColor === color) {
+                for (const direction of directions) {
+                    const { dx, dy } = direction;
+                    let count = 1;
+
+                    for (let step = 1; step < 4; step++) {
+                        const ni = i + step * dx;
+                        const nj = j + step * dy;
+
+                        if (ni >= 0 && ni < gameState.dimension && nj >= 0 && nj < gameState.dimension) {
+                            if (gameState.board[ni * gameState.dimension + nj].playerColor === color) {
+                                count++;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if (count === 4) {
+                        won = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (won) {
+            break;
+        }
+    }
+
+    return won;
+}
+
 
 io.on("connection", (socket) => {
     socket.on('new_connection', (arg) => {
@@ -54,8 +116,13 @@ io.on("connection", (socket) => {
                 socket.disconnect();
             }
             else {
-                gameState.users.push({login: arg, socket: socket});
-                socket.emit('assign_color', gameState.playerColors[gameState.users.length - 1]);
+                const id = crypto.randomUUID();
+                gameState.users.push({login: arg, socket: socket, id: id});
+                socket.emit('assign_credentials', {
+                    playerId: id,
+                    playerColor: gameState.playerColors[gameState.users.length - 1]
+                });
+
                 gameState.gameStarted = (gameState.users.length === NUMBER_OF_PLAYERS);
 
                 if (gameState.gameStarted) {
@@ -71,10 +138,30 @@ io.on("connection", (socket) => {
 
     socket.on('played_turn', (arg) => {
         gameState.users.forEach(u => {
-            if (socket.id !== u.socket.id) {
+            if (arg.playerId !== u.id) {
                 io.to(u.socket.id).emit('other_player_played', arg);
             }
         });
+
+        let tile = gameState.board[arg.x * gameState.dimension + arg.y];
+        tile.played = true;
+        tile.playerColor = arg.color;
+        tile.card = arg.card;
+
+        const won = checkWin(arg.color);
+        if (won) {
+            let winner = gameState.users.find(u => u.socket.id === socket.id)[0];
+            console.log(winner);
+            console.log(`${winner.login} has won!`);
+
+            io.to(winner.socket.id).emit('has_won');
+
+            gameState.users.forEach(u => {
+                if (u.socket.id !== winner.id) {
+                    io.to(u.socket.id).emit('has_lost', winner.login);
+                }
+            })
+        }
 
         gameState.turn = (gameState.turn + 1) % NUMBER_OF_PLAYERS;
         io.to(gameState.users[gameState.turn].socket.id).emit('set_player_turn');

@@ -34,6 +34,8 @@ export function reducer(state, action) {
                 )
             };
         case 'other_played_card':
+            console.log('scoop')
+            console.log(`[${action.payload.playerId}] ${action.payload.login} played`);
             return {
                 ...state,
                 board: state.board.map(
@@ -47,10 +49,11 @@ export function reducer(state, action) {
                     }
                 )
             };
-        case 'assign_color':
+        case 'assign_credentials':
             return {
                 ...state,
-                color: action.payload
+                id: action.payload.playerId,
+                color: action.payload.playerColor
             };
         case 'set_player_turn':
             return {
