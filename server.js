@@ -33,44 +33,52 @@ app.get('/', (req, res) => {
 });
 
 const NUMBER_OF_PLAYERS = 4;
-let users = [];
-let gameStarted = false;
-let turn = 0;
+
+let gameState = {
+    users: [],
+    playerColors: ['#c23f3f', '#0b6c0b', '#3e7da9', '#ef9c20'],
+    turn: 0,
+    board: []
+};
 
 io.on("connection", (socket) => {
     socket.on('new_connection', (arg) => {
-        if (users.find(user => user.login === arg)) {
+        if (gameState.users.find(user => user.login === arg)) {
             console.log("A user with this name already exists");
             io.to(socket.id).emit('login_already_taken');
             socket.disconnect();
         }
         else {
-            if (gameStarted) {
+            if (gameState.gameStarted) {
                 io.to(socket.id).emit('no_more_space');
                 socket.disconnect();
             }
             else {
-                users.push({login: arg, socket: socket});
-                gameStarted = (users.length === NUMBER_OF_PLAYERS);
+                gameState.users.push({login: arg, socket: socket});
+                socket.emit('assign_color', gameState.playerColors[gameState.users.length - 1]);
+                gameState.gameStarted = (gameState.users.length === NUMBER_OF_PLAYERS);
 
-                if (gameStarted) {
-                    users.forEach(u => {
+                if (gameState.gameStarted) {
+                    gameState.users.forEach(u => {
                         u.socket.emit('game_started');
-                    })
+                    });
+                    io.to(gameState.users[0].socket.id).emit('set_player_turn');
                 }
             }
         }
-        console.log(users.map(u => u.login));
+        console.log(gameState.users.map(u => u.login));
     });
 
     socket.on('played_turn', (arg) => {
-        console.log(arg);
-        users.forEach(u => {
+        gameState.users.forEach(u => {
             if (socket.id !== u.socket.id) {
                 io.to(u.socket.id).emit('other_player_played', arg);
             }
         })
-    })
+
+        gameState.turn = (gameState.turn + 1) % NUMBER_OF_PLAYERS;
+        io.to(gameState.users[gameState.turn].socket.id).emit('set_player_turn');
+    });
 });
 
 server.listen(3000, () => {

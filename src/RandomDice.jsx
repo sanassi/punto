@@ -4,10 +4,7 @@ import {getRandomIntInclusive} from "./Utils.js";
 
 export default function RandomDice({ state, dispatch }) {
     return (
-        <div className="random-dice"
-             onClick={() => {
-                 dispatch({type: 'select_new_card', payload: { cardValue: getRandomIntInclusive(1, 6)}})
-             }}>
+        <div className="random-dice">
             <Dice face={state.card}
                   color={state.color}
                   visible={true}

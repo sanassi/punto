@@ -35,6 +35,12 @@ export default function Board({state, dispatch}) {
                 color: state.color,
                 card: state.card
         });
+
+        dispatch({type: 'select_new_card'});
+
+        dispatch({
+            type: 'set_player_turn'
+        });
     }
 
     const tiles = state.board.map((t, index) => {
