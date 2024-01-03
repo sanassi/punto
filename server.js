@@ -74,7 +74,7 @@ io.on("connection", (socket) => {
             if (socket.id !== u.socket.id) {
                 io.to(u.socket.id).emit('other_player_played', arg);
             }
-        })
+        });
 
         gameState.turn = (gameState.turn + 1) % NUMBER_OF_PLAYERS;
         io.to(gameState.users[gameState.turn].socket.id).emit('set_player_turn');

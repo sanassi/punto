@@ -9,7 +9,6 @@ export function reducer(state, action) {
             // eslint-disable-next-line no-case-declarations
             let newCards = state.remainingCards.slice();
             newCards.splice(-1);
-            console.log(newCards);
 
             return {
                 ...state,
