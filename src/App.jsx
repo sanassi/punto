@@ -18,7 +18,8 @@ function App() {
             color: '#0b6c0b',
             board: [],
             isMyTurn: false,
-            remainingCards: []
+            remainingCards: [],
+            otherPlayers: []
         },
         (initial) => {
             let initialCards = initCards(6, 3);
@@ -31,7 +32,8 @@ function App() {
                 card: firstCard,
                 color: initial.color,
                 isMyTurn: initial.isMyTurn,
-                remainingCards: initialCards
+                remainingCards: initialCards,
+                otherPlayers: initial.otherPlayers
             };
         });
 
@@ -86,6 +88,13 @@ function App() {
             });
         }
 
+        function onOtherUserConnected(userLogin) {
+            dispatch({
+                type: 'other_user_connected',
+                payload: userLogin
+            })
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on('login_already_taken', onDisconnect);
@@ -95,6 +104,7 @@ function App() {
         socket.on('set_player_turn', onSetMyTurn);
         socket.on('has_lost', onHasLost);
         socket.on('has_won', onHasWon);
+        socket.on('other_user_connected', onOtherUserConnected);
 
         return () => {
             socket.off('connect', onConnect);
@@ -106,8 +116,9 @@ function App() {
             socket.off('set_player_turn', onSetMyTurn);
             socket.off('has_lost', onHasLost);
             socket.off('has_won', onHasWon);
+            socket.off('other_user_connected', onOtherUserConnected);
         }
-    }, [login]);
+    }, [login, state]);
 
     return logged ? <GamePage login={login}
                               state={state}

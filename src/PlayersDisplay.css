@@ -1,0 +1,9 @@
+.players-display {
+    align-items: center;
+}
+
+.players-display ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}

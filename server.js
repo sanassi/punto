@@ -117,11 +117,19 @@ io.on("connection", (socket) => {
             }
             else {
                 const id = crypto.randomUUID();
-                gameState.users.push({login: arg, socket: socket, id: id});
+                const newUser = {login: arg, socket: socket, id: id};
+                gameState.users.push(newUser);
                 socket.emit('assign_credentials', {
                     playerId: id,
-                    playerColor: gameState.playerColors[gameState.users.length - 1]
+                    playerColor: gameState.playerColors[gameState.users.length - 1],
+                    alreadyConnected: gameState.users.slice(0, -1).map(u => u.login)
                 });
+
+                gameState.users.forEach(u => {
+                    if (u.id !== newUser.id) {
+                        io.to(u.socket.id).emit('other_user_connected', newUser.login);
+                    }
+                })
 
                 gameState.gameStarted = (gameState.users.length === NUMBER_OF_PLAYERS);
 

@@ -51,10 +51,12 @@ export function reducer(state, action) {
                 )
             };
         case 'assign_credentials':
+            console.log(action.payload.alreadyConnected);
             return {
                 ...state,
                 id: action.payload.playerId,
-                color: action.payload.playerColor
+                color: action.payload.playerColor,
+                otherPlayers: action.payload.alreadyConnected
             };
         case 'set_player_turn':
             return {
@@ -70,6 +72,14 @@ export function reducer(state, action) {
             alert(`You Lost :/ ... ${action.payload} won!`);
             return {
                 ...state
+            };
+        case 'other_user_connected':
+            // eslint-disable-next-line no-case-declarations
+            const otherPlayersCopy = state.otherPlayers.slice();
+            otherPlayersCopy.push(action.payload);
+            return {
+                ...state,
+                otherPlayers: otherPlayersCopy
             };
         default:
             throw Error('Unknown action.');
