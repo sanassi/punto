@@ -1,3 +1,5 @@
+import {initBoard, initCards} from "./Utils.js";
+
 export function reducer(state, action) {
     switch (action.type) {
         case 'select_new_card':
@@ -67,12 +69,14 @@ export function reducer(state, action) {
         case 'has_won':
             alert('You won!');
             return {
-                ...state
+                ...state,
+                gameIsOn: false,
             };
         case 'has_lost':
             alert(`You Lost :/ ... ${action.payload} won!`);
             return {
-                ...state
+                ...state,
+                gameIsOn: false,
             };
         case 'other_user_connected':
             // eslint-disable-next-line no-case-declarations
@@ -81,6 +85,26 @@ export function reducer(state, action) {
             return {
                 ...state,
                 otherPlayers: otherPlayersCopy
+            };
+        case 'play_again':
+            return {
+                ...state,
+                gameIsOn: true,
+            };
+        case 'reset_game_values':
+            // eslint-disable-next-line no-case-declarations
+            let initialCards = initCards(6, 3);
+            // eslint-disable-next-line no-case-declarations
+            let firstCard = initialCards[initialCards.length - 1];
+            initialCards.splice(-1);
+
+            // eslint-disable-next-line no-case-declarations
+            let newBoard = initBoard(6, state.color);
+            return {
+                ...state,
+                card: firstCard,
+                board: newBoard,
+                remainingCards: initialCards
             };
         default:
             throw Error('Unknown action.');

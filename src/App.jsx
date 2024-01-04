@@ -21,7 +21,8 @@ function App() {
             remainingCards: [],
             otherPlayers: [],
             isFirst: false,
-            dimension: 6
+            dimension: 6,
+            gameIsOn: true
         },
         (initial) => {
             let initialCards = initCards(6, 3);
@@ -37,7 +38,8 @@ function App() {
                 remainingCards: initialCards,
                 otherPlayers: initial.otherPlayers,
                 isFirst: initial.isFirst,
-                dimension: initial.dimension
+                dimension: initial.dimension,
+                gameIsOn: initial.gameIsOn
             };
         });
 
@@ -102,6 +104,12 @@ function App() {
             })
         }
 
+        function onResetGameValues() {
+            dispatch({
+                type: 'reset_game_values'
+            })
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on('login_already_taken', onDisconnect);
@@ -112,6 +120,7 @@ function App() {
         socket.on('has_lost', onHasLost);
         socket.on('has_won', onHasWon);
         socket.on('other_user_connected', onOtherUserConnected);
+        socket.on('reset_game_values', onResetGameValues);
 
         return () => {
             socket.off('connect', onConnect);
@@ -124,6 +133,7 @@ function App() {
             socket.off('has_lost', onHasLost);
             socket.off('has_won', onHasWon);
             socket.off('other_user_connected', onOtherUserConnected);
+            socket.off('reset_game_values', onResetGameValues);
         }
     }, [login, state]);
 

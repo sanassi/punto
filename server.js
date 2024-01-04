@@ -42,16 +42,18 @@ let gameState = {
     board: []
 };
 
-gameState.board = Array.from({length: gameState.dimension * gameState.dimension});
-gameState.board = gameState.board.map((t, index) => {
-    return {
-        x: Math.floor(index / gameState.dimension),
-        y: Math.floor(index % gameState.dimension),
-        played: false,
-        playerColor: '',
-        card: 0,
-    }
-})
+function initGameBoard(gameState) {
+    gameState.board = Array.from({length: gameState.dimension * gameState.dimension});
+    gameState.board = gameState.board.map((t, index) => {
+        return {
+            x: Math.floor(index / gameState.dimension),
+            y: Math.floor(index % gameState.dimension),
+            played: false,
+            playerColor: '',
+            card: 0,
+        }
+    })
+}
 
 function checkWin(color) {
     let won = false;
@@ -134,6 +136,7 @@ io.on("connection", (socket) => {
                 gameState.gameStarted = (gameState.users.length === NUMBER_OF_PLAYERS);
 
                 if (gameState.gameStarted) {
+                    initGameBoard(gameState);
                     gameState.users.forEach(u => {
                         u.socket.emit('game_started');
                     });
@@ -169,12 +172,26 @@ io.on("connection", (socket) => {
                     io.to(u.socket.id).emit('has_lost', winner.login);
                 }
             })
+
+            gameState.gameStarted = false;
         }
         else {
             gameState.turn = (gameState.turn + 1) % NUMBER_OF_PLAYERS;
             io.to(gameState.users[gameState.turn].socket.id)
                 .emit('set_player_turn', { isFirst: false });
         }
+    });
+
+    socket.on('prepare_for_new_game', () => {
+        initGameBoard(gameState);
+        gameState.turn = 0;
+        gameState.gameStarted = true;
+        io.emit('reset_game_values');
+        gameState.users.forEach(u => {
+            u.socket.emit('game_started');
+        });
+        io.to(gameState.users[0].socket.id)
+            .emit('set_player_turn', { isFirst: true });
     });
 });
 
