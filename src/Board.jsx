@@ -7,8 +7,6 @@ import {socket} from "../socket.js";
 
 export default function Board({state, dispatch}) {
     let boardRef = useRef(null);
-    const dimension = 6;
-
     const boardDimensions = useContainerDimensions(boardRef);
 
     const onClick = (event) => {
@@ -21,28 +19,49 @@ export default function Board({state, dispatch}) {
         let boardRect = boardRef.current.getBoundingClientRect();
         let clickedTilePos = { x: event.clientX - boardRect.x, y: event.clientY - boardRect.y };
 
-        clickedTilePos.x = Math.floor(clickedTilePos.x / (boardDimensions.height / dimension));
-        clickedTilePos.y = Math.floor(clickedTilePos.y / (boardDimensions.height / dimension));
+        clickedTilePos.x = Math.floor(clickedTilePos.x / (boardDimensions.height / state.dimension));
+        clickedTilePos.y = Math.floor(clickedTilePos.y / (boardDimensions.height / state.dimension));
 
         // TODO: check if the card can be placed here (ie. if there is a card around x,y)
-        dispatch({ type: 'place_card', payload: {
-            posX: clickedTilePos.y, posY: clickedTilePos.x
-        }});
 
-        socket.emit('played_turn', {
+        function thereIsACardIsNear(x, y) {
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (x + i < 0 || x + i >= state.dimension || y + j < 0 || y + j >= state.dimension)
+                        continue;
+
+                    let tile = state.board[(x + i) * state.dimension + (y + j)];
+                    if (tile.visible)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        let tile = state.board[clickedTilePos.y * state.dimension + clickedTilePos.x];
+        const canPlaceACard = state.isFirst || (tile.card < state.card && thereIsACardIsNear(clickedTilePos.y, clickedTilePos.x));
+        if (canPlaceACard) {
+            dispatch({ type: 'place_card', payload: {
+                    posX: clickedTilePos.y, posY: clickedTilePos.x
+                }});
+
+            socket.emit('played_turn', {
                 x: clickedTilePos.y,
                 y: clickedTilePos.x,
                 color: state.color,
                 card: state.card,
                 playerId: state.id,
                 login: state.login
-        });
+            });
 
-        dispatch({type: 'select_new_card'});
+            dispatch({type: 'select_new_card'});
 
-        dispatch({
-            type: 'set_player_turn'
-        });
+            dispatch({
+                type: 'set_player_turn',
+                payload: { isFirst: false }
+            });
+        }
     }
 
     const tiles = state.board.map((t, index) => {

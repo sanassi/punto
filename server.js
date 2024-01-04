@@ -137,7 +137,8 @@ io.on("connection", (socket) => {
                     gameState.users.forEach(u => {
                         u.socket.emit('game_started');
                     });
-                    io.to(gameState.users[0].socket.id).emit('set_player_turn');
+                    io.to(gameState.users[0].socket.id)
+                        .emit('set_player_turn', { isFirst: true });
                 }
             }
         }
@@ -169,9 +170,11 @@ io.on("connection", (socket) => {
                 }
             })
         }
-
-        gameState.turn = (gameState.turn + 1) % NUMBER_OF_PLAYERS;
-        io.to(gameState.users[gameState.turn].socket.id).emit('set_player_turn');
+        else {
+            gameState.turn = (gameState.turn + 1) % NUMBER_OF_PLAYERS;
+            io.to(gameState.users[gameState.turn].socket.id)
+                .emit('set_player_turn', { isFirst: false });
+        }
     });
 });
 

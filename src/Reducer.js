@@ -61,7 +61,8 @@ export function reducer(state, action) {
         case 'set_player_turn':
             return {
                 ...state,
-                isMyTurn: !state.isMyTurn
+                isMyTurn: !state.isMyTurn,
+                isFirst: action.payload.isFirst ?? state.isFirst
             };
         case 'has_won':
             alert('You won!');

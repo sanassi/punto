@@ -19,7 +19,9 @@ function App() {
             board: [],
             isMyTurn: false,
             remainingCards: [],
-            otherPlayers: []
+            otherPlayers: [],
+            isFirst: false,
+            dimension: 6
         },
         (initial) => {
             let initialCards = initCards(6, 3);
@@ -33,7 +35,9 @@ function App() {
                 color: initial.color,
                 isMyTurn: initial.isMyTurn,
                 remainingCards: initialCards,
-                otherPlayers: initial.otherPlayers
+                otherPlayers: initial.otherPlayers,
+                isFirst: initial.isFirst,
+                dimension: initial.dimension
             };
         });
 
@@ -47,6 +51,8 @@ function App() {
 
         function onDisconnect() {
             console.log('disconnecting');
+            setLogin('');
+            socket.close();
             setLogged(false);
         }
 
@@ -69,9 +75,10 @@ function App() {
             });
         }
 
-        function onSetMyTurn() {
+        function onSetMyTurn(arg) {
             dispatch({
-                type: 'set_player_turn'
+                type: 'set_player_turn',
+                payload: arg
             });
         }
 
