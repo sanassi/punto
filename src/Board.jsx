@@ -34,7 +34,8 @@ export default function Board({state, dispatch}) {
                 y: clickedTilePos.x,
                 color: state.color,
                 card: state.card,
-                playerId: state.id
+                playerId: state.id,
+                login: state.login
         });
 
         dispatch({type: 'select_new_card'});

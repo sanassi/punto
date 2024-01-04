@@ -133,7 +133,9 @@ io.on("connection", (socket) => {
                 }
             }
         }
-        console.log(gameState.users.map(u => u.login));
+        console.log(gameState.users.map(u => {
+            return { login: u.login, id: u.id };
+        }));
     });
 
     socket.on('played_turn', (arg) => {
@@ -150,14 +152,11 @@ io.on("connection", (socket) => {
 
         const won = checkWin(arg.color);
         if (won) {
-            let winner = gameState.users.find(u => u.socket.id === socket.id)[0];
-            console.log(winner);
-            console.log(`${winner.login} has won!`);
-
+            let winner = gameState.users.find(u => u.id === arg.playerId.toString());
             io.to(winner.socket.id).emit('has_won');
 
             gameState.users.forEach(u => {
-                if (u.socket.id !== winner.id) {
+                if (u.id !== winner.id) {
                     io.to(u.socket.id).emit('has_lost', winner.login);
                 }
             })

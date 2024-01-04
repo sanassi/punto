@@ -34,7 +34,8 @@ export function reducer(state, action) {
                 )
             };
         case 'other_played_card':
-            console.log('scoop')
+            console.log('Payload');
+            console.log(action.payload);
             console.log(`[${action.payload.playerId}] ${action.payload.login} played`);
             return {
                 ...state,
@@ -59,6 +60,16 @@ export function reducer(state, action) {
             return {
                 ...state,
                 isMyTurn: !state.isMyTurn
+            };
+        case 'has_won':
+            alert('You won!');
+            return {
+                ...state
+            };
+        case 'has_lost':
+            alert(`You Lost :/ ... ${action.payload} won!`);
+            return {
+                ...state
             };
         default:
             throw Error('Unknown action.');

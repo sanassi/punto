@@ -74,14 +74,12 @@ function App() {
         }
 
         function onHasWon() {
-            alert('You won!');
             dispatch({
                 type: 'has_won'
             });
         }
 
         function onHasLost(gameWinner) {
-            alert('You Lost.. ' + gameWinner + 'won!');
             dispatch({
                 type: 'has_lost',
                 payload: gameWinner
