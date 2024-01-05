@@ -27,10 +27,11 @@ const io = new Server(server, {
         cors: {origin: "http://localhost:5173", methods: ["GET", "POST"]}
 });
 app.use(cors());
+app.use(express.static(__dirname + '/dist/'));
 
 app.get('/', (req, res) => {
     // eslint-disable-next-line no-undef
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/dist/index.html');
 });
 
 
