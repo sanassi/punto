@@ -1,4 +1,4 @@
-export const events = {
+export const serverEvents = {
     LOGIN_ALREADY_TAKEN: 'login_already_taken',
     NO_MORE_SPACE: 'no_more_space',
     ROOM_NOT_FOUND: 'room_not_found',

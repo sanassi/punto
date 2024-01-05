@@ -6,6 +6,7 @@ import http from "http";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from "cors";
+import {serverEvents} from "./serverEvents.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -124,13 +125,13 @@ io.on("connection", (socket) => {
             targetRoom.users.find(user => user.login === playerLogin);
 
         if (loginAlreadyTaken) {
-            io.to(socket.id).emit('login_already_taken');
+            io.to(socket.id).emit(serverEvents.LOGIN_ALREADY_TAKEN);
             socket.disconnect();
         }
         else {
             const roomIsFull = targetRoom !== undefined && targetRoom.gameStarted;
             if (roomIsFull) {
-                io.to(socket.id).emit('no_more_space');
+                io.to(socket.id).emit(serverEvents.NO_MORE_SPACE);
                 socket.disconnect();
             }
             else {
@@ -153,7 +154,7 @@ io.on("connection", (socket) => {
                 else {
                     const roomExists = Object.hasOwn(rooms, arg.roomConfig.room);
                     if (!roomExists) {
-                        socket.emit('room_not_found');
+                        socket.emit(serverEvents.ROOM_NOT_FOUND);
                         socket.disconnect();
                         return;
                     }
@@ -166,7 +167,7 @@ io.on("connection", (socket) => {
                 targetRoom.users.push(newUser);
                 console.log(rooms);
 
-                socket.emit('assign_credentials', {
+                socket.emit(serverEvents.ASSIGN_CREDENTIALS, {
                     playerId: id,
                     playerColor: targetRoom.playerColors[targetRoom.users.length - 1],
                     alreadyConnected: targetRoom.users.slice(0, -1).map(u => u.login),
@@ -175,7 +176,8 @@ io.on("connection", (socket) => {
 
                 targetRoom.users.forEach(u => {
                     if (u.id !== newUser.id) {
-                        io.to(u.socket.id).emit('other_user_connected', newUser.login);
+                        io.to(u.socket.id).emit(serverEvents
+                            .OTHER_USER_CONNECTED, newUser.login);
                     }
                 })
 
@@ -183,9 +185,9 @@ io.on("connection", (socket) => {
 
                 if (targetRoom.gameStarted) {
                     initGameBoard(targetRoom);
-                    io.to(targetRoom.roomId).emit('game_started');
+                    io.to(targetRoom.roomId).emit(serverEvents.GAME_STARTED);
                     io.to(targetRoom.users[0].socket.id)
-                        .emit('set_player_turn', { isFirst: true });
+                        .emit(serverEvents.SET_PLAYER_TURN, { isFirst: true });
                 }
             }
         }
@@ -199,7 +201,7 @@ io.on("connection", (socket) => {
         const room = rooms[arg.room];
         room.users.forEach(u => {
             if (arg.playerId !== u.id) {
-                io.to(u.socket.id).emit('other_player_played', arg);
+                io.to(u.socket.id).emit(serverEvents.OTHER_PLAYER_PLAYED, arg);
             }
         });
 
@@ -211,11 +213,11 @@ io.on("connection", (socket) => {
         const won = checkWin(room, arg.color);
         if (won) {
             let winner = room.users.find(u => u.id === arg.playerId.toString());
-            io.to(winner.socket.id).emit('has_won');
+            io.to(winner.socket.id).emit(serverEvents.HAS_WON);
 
             room.users.forEach(u => {
                 if (u.id !== winner.id) {
-                    io.to(u.socket.id).emit('has_lost', winner.login);
+                    io.to(u.socket.id).emit(serverEvents.HAS_LOST, winner.login);
                 }
             })
 
@@ -224,7 +226,7 @@ io.on("connection", (socket) => {
         else {
             room.turn = (room.turn + 1) % room.numberOfPlayers;
             io.to(room.users[room.turn].socket.id)
-                .emit('set_player_turn', { isFirst: false });
+                .emit(serverEvents.SET_PLAYER_TURN, { isFirst: false });
         }
     });
 
@@ -233,12 +235,12 @@ io.on("connection", (socket) => {
         initGameBoard(room);
         room.turn = 0;
         room.gameStarted = true;
-        io.emit('reset_game_values');
+        io.emit(serverEvents.RESET_GAME_VALUES);
         room.users.forEach(u => {
-            u.socket.emit('game_started');
+            u.socket.emit(serverEvents.GAME_STARTED);
         });
         io.to(room.users[0].socket.id)
-            .emit('set_player_turn', { isFirst: true });
+            .emit(serverEvents.SET_PLAYER_TURN, { isFirst: true });
     });
 });
 
