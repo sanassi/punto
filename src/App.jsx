@@ -13,6 +13,7 @@ function App() {
     const [state, dispatch] = useReducer(reducer,
         {
             id: '',
+            roomConfig: {},
             login: login,
             card: 1,
             color: '#0b6c0b',
@@ -30,6 +31,7 @@ function App() {
             initialCards.splice(-1);
             return {
                 id: '',
+                roomConfig: initial.roomConfig,
                 login: initial.login,
                 board: initBoard(6, initial.color),
                 card: firstCard,
@@ -48,7 +50,10 @@ function App() {
             console.log('loggedIn');
             setLogged(true);
             state.login = login
-            socket.emit('new_connection', login);
+            socket.emit('new_connection', {
+                login: login,
+                roomConfig: state.roomConfig
+            });
         }
 
         function onDisconnect() {
@@ -71,6 +76,8 @@ function App() {
         }
 
         function onAssignCredentials(arg) {
+            console.log('arg:')
+            console.log(arg);
             dispatch({
                 type: 'assign_credentials',
                 payload: arg
@@ -110,8 +117,19 @@ function App() {
             })
         }
 
+        function onGameStarted() {
+            console.log('starting the game!');
+        }
+
+        function onRoomNotFound() {
+            console.log('room not found.. :/');
+            setLogged(false);
+            setLogin('');
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
+        socket.on('game_started', onGameStarted);
         socket.on('login_already_taken', onDisconnect);
         socket.on('no_more_space', onNoMoreSpace);
         socket.on('other_player_played', onOtherPlayed);
@@ -121,10 +139,12 @@ function App() {
         socket.on('has_won', onHasWon);
         socket.on('other_user_connected', onOtherUserConnected);
         socket.on('reset_game_values', onResetGameValues);
+        socket.on('room_not_found', onRoomNotFound);
 
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
+            socket.off('game_started', onGameStarted);
             socket.off('login_already_taken', onDisconnect);
             socket.off('no_more_space', onNoMoreSpace);
             socket.off('other_player_played', onOtherPlayed);
@@ -134,6 +154,7 @@ function App() {
             socket.off('has_won', onHasWon);
             socket.off('other_user_connected', onOtherUserConnected);
             socket.off('reset_game_values', onResetGameValues);
+            socket.off('room_not_found', onRoomNotFound);
         }
     }, [login, state]);
 
@@ -141,6 +162,8 @@ function App() {
                               state={state}
                               dispatch={dispatch}/> :
         <LoginPage
+            state={state}
+            dispatch={dispatch}
             setLogged={setLogged}
             setLogin={setLogin}
         />;

@@ -1,5 +1,7 @@
 .players-display {
     align-items: center;
+    display: flex;
+    flex-direction: column;
 }
 
 .players-display ul {

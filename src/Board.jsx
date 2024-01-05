@@ -52,7 +52,8 @@ export default function Board({state, dispatch}) {
                 color: state.color,
                 card: state.card,
                 playerId: state.id,
-                login: state.login
+                login: state.login,
+                room: state.roomConfig.room
             });
 
             dispatch({type: 'select_new_card'});
