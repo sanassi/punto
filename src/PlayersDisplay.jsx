@@ -3,7 +3,7 @@ import './PlayersDisplay.css';
 export default function PlayersDisplay({ state }) {
     return (
         <div className='players-display'>
-            <label>{state.roomConfig.room}</label>
+            <label className='room-label'>{state.roomConfig.room}</label>
             <label>Connected:</label>
             <ul>
                 {
