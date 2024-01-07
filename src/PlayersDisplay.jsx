@@ -8,7 +8,12 @@ export default function PlayersDisplay({ state }) {
             <ul>
                 {
                     state.otherPlayers.map(p => {
-                        return <li key={`li-${p}`}>{p}</li>
+                        return (
+                           <li key={`li-${p}`}
+                                   className={state.currentPlayerPlaying === p ? 'current-playing' : ''}>
+                           {p}
+                        </li>
+                        )
                     })
                 }
             </ul>

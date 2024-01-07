@@ -23,7 +23,8 @@ function App() {
             otherPlayers: [],
             isFirst: false,
             dimension: 6,
-            gameIsOn: true
+            gameIsOn: true,
+            currentPlayerPlaying: ''
         },
         (initial) => {
             let initialCards = initCards(6, 3);
@@ -41,7 +42,8 @@ function App() {
                 otherPlayers: initial.otherPlayers,
                 isFirst: initial.isFirst,
                 dimension: initial.dimension,
-                gameIsOn: initial.gameIsOn
+                gameIsOn: initial.gameIsOn,
+                currentPlayerPlaying: initial.currentPlayerPlaying
             };
         });
 
@@ -127,6 +129,14 @@ function App() {
             setLogin('');
         }
 
+        function onWaitingForOtherPlayerToPlay(arg) {
+            console.log(arg);
+            dispatch({
+                type: 'waiting_for_player_to_play',
+                payload: arg
+            });
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on('game_started', onGameStarted);
@@ -140,6 +150,8 @@ function App() {
         socket.on('other_user_connected', onOtherUserConnected);
         socket.on('reset_game_values', onResetGameValues);
         socket.on('room_not_found', onRoomNotFound);
+        socket.on('waiting_for_player_to_play',
+           onWaitingForOtherPlayerToPlay);
 
         return () => {
             socket.off('connect', onConnect);
@@ -155,6 +167,8 @@ function App() {
             socket.off('other_user_connected', onOtherUserConnected);
             socket.off('reset_game_values', onResetGameValues);
             socket.off('room_not_found', onRoomNotFound);
+            socket.off('waiting_for_player_to_play',
+               onWaitingForOtherPlayerToPlay);
         }
     }, [login, state]);
 

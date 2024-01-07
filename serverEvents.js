@@ -10,4 +10,5 @@ export const serverEvents = {
     HAS_WON: 'has_won',
     HAS_LOST: 'has_lost',
     RESET_GAME_VALUES: 'reset_game_values',
+    WAITING_FOR_PLAYER_TO_PLAY: 'waiting_for_player_to_play'
 }

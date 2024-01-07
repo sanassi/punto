@@ -72,6 +72,8 @@ function checkWin(gameRoom, color) {
     const directions = [
         { dx: -1, dy: 0 },
         { dx: 1, dy: 0 },
+        { dx: -1, dy: 1},
+        { dx: 1, dy: -1 },
         { dx: 0, dy: -1 },
         { dx: 0, dy: 1 },
         { dx: 1, dy: 1},
@@ -228,6 +230,9 @@ io.on("connection", (socket) => {
             room.turn = (room.turn + 1) % room.numberOfPlayers;
             io.to(room.users[room.turn].socket.id)
                 .emit(serverEvents.SET_PLAYER_TURN, { isFirst: false });
+
+            io.to(arg.room).emit(serverEvents.WAITING_FOR_PLAYER_TO_PLAY,
+               room.users[room.turn].login);
         }
     });
 

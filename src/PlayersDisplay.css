@@ -12,3 +12,7 @@
     margin: 0;
     padding: 0;
 }
+
+.current-playing {
+    color: #646cff;
+}

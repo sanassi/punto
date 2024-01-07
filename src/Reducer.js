@@ -114,6 +114,11 @@ export function reducer(state, action) {
                 ...state,
                 roomConfig: action.payload
             };
+        case 'waiting_for_player_to_play':
+            return  {
+                ...state,
+                currentPlayerPlaying: action.payload
+            };
         default:
             throw Error('Unknown action.');
     }
