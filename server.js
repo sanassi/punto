@@ -24,7 +24,7 @@ const vite = await createServer({
 app.use(vite.middlewares);
 
 const io = new Server(server, {
-        cors: {origin: "http://localhost:5173", methods: ["GET", "POST"]}
+        cors: {origin: "*", methods: ["GET", "POST"]}
 });
 app.use(cors());
 app.use(express.static(__dirname + '/dist/'));
@@ -245,6 +245,6 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(3000, () => {
-    console.log('listening...');
+server.listen(3000, "0.0.0.0", () => {
+    console.log('listening')
 });
