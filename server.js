@@ -6,6 +6,7 @@ import http from "http";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from "cors";
+import {serverEvents} from "./serverEvents.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,31 +24,37 @@ const vite = await createServer({
 app.use(vite.middlewares);
 
 const io = new Server(server, {
-        cors: {origin: "http://localhost:5173", methods: ["GET", "POST"]}
+        cors: {origin: "*", methods: ["GET", "POST"]}
 });
 app.use(cors());
+app.use(express.static(__dirname + '/dist/'));
 
 app.get('/', (req, res) => {
     // eslint-disable-next-line no-undef
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/dist/index.html');
 });
 
-const NUMBER_OF_PLAYERS = 4;
 
-let gameState = {
+let rooms = {};
+
+/*
+const NUMBER_OF_PLAYERS = 4;
+let gameRoom = {
     users: [],
     dimension: 6,
     playerColors: ['#c23f3f', '#0b6c0b', '#3e7da9', '#ef9c20'],
     turn: 0,
-    board: []
+    board: [],
+    numberOfPlayers: 2
 };
+ */
 
-function initGameBoard(gameState) {
-    gameState.board = Array.from({length: gameState.dimension * gameState.dimension});
-    gameState.board = gameState.board.map((t, index) => {
+function initGameBoard(gameRoom) {
+    gameRoom.board = Array.from({length: gameRoom.dimension * gameRoom.dimension});
+    gameRoom.board = gameRoom.board.map((t, index) => {
         return {
-            x: Math.floor(index / gameState.dimension),
-            y: Math.floor(index % gameState.dimension),
+            x: Math.floor(index / gameRoom.dimension),
+            y: Math.floor(index % gameRoom.dimension),
             played: false,
             playerColor: '',
             card: 0,
@@ -55,21 +62,27 @@ function initGameBoard(gameState) {
     })
 }
 
-function checkWin(color) {
+function generateRoomKey() {
+    return Math.random().toString(36).slice(4).toUpperCase();
+}
+
+function checkWin(gameRoom, color) {
     let won = false;
 
     const directions = [
         { dx: -1, dy: 0 },
         { dx: 1, dy: 0 },
+        { dx: -1, dy: 1},
+        { dx: 1, dy: -1 },
         { dx: 0, dy: -1 },
         { dx: 0, dy: 1 },
         { dx: 1, dy: 1},
         { dx: -1, dy: -1}
     ];
 
-    for (let i = 0; i < gameState.dimension; i++) {
-        for (let j = 0; j < gameState.dimension; j++) {
-            if (gameState.board[i * gameState.dimension + j].playerColor === color) {
+    for (let i = 0; i < gameRoom.dimension; i++) {
+        for (let j = 0; j < gameRoom.dimension; j++) {
+            if (gameRoom.board[i * gameRoom.dimension + j].playerColor === color) {
                 for (const direction of directions) {
                     const { dx, dy } = direction;
                     let count = 1;
@@ -78,8 +91,8 @@ function checkWin(color) {
                         const ni = i + step * dx;
                         const nj = j + step * dy;
 
-                        if (ni >= 0 && ni < gameState.dimension && nj >= 0 && nj < gameState.dimension) {
-                            if (gameState.board[ni * gameState.dimension + nj].playerColor === color) {
+                        if (ni >= 0 && ni < gameRoom.dimension && nj >= 0 && nj < gameRoom.dimension) {
+                            if (gameRoom.board[ni * gameRoom.dimension + nj].playerColor === color) {
                                 count++;
                             } else {
                                 break;
@@ -104,97 +117,139 @@ function checkWin(color) {
     return won;
 }
 
-
 io.on("connection", (socket) => {
     socket.on('new_connection', (arg) => {
-        if (gameState.users.find(user => user.login === arg)) {
-            console.log("A user with this name already exists");
-            io.to(socket.id).emit('login_already_taken');
+        const targetRoomId = arg.roomConfig.room;
+        const playerLogin = arg.login;
+
+        const targetRoom = rooms[targetRoomId];
+
+        const loginAlreadyTaken = targetRoom !== undefined &&
+            targetRoom.users.find(user => user.login === playerLogin);
+
+        if (loginAlreadyTaken) {
+            io.to(socket.id).emit(serverEvents.LOGIN_ALREADY_TAKEN);
             socket.disconnect();
         }
         else {
-            if (gameState.gameStarted) {
-                io.to(socket.id).emit('no_more_space');
+            const roomIsFull = targetRoom !== undefined && targetRoom.gameStarted;
+            if (roomIsFull) {
+                io.to(socket.id).emit(serverEvents.NO_MORE_SPACE);
                 socket.disconnect();
             }
             else {
+                console.log(arg);
                 const id = crypto.randomUUID();
-                const newUser = {login: arg, socket: socket, id: id};
-                gameState.users.push(newUser);
-                socket.emit('assign_credentials', {
+
+                let roomId;
+                if (arg.roomConfig.type === 'create_room') {
+                    roomId = generateRoomKey();
+                    rooms[roomId] = {
+                        roomId: roomId,
+                        users: [],
+                        dimension: 6,
+                        playerColors: ['#c23f3f', '#0b6c0b', '#3e7da9', '#ef9c20'],
+                        turn: 0,
+                        board: [],
+                        numberOfPlayers: Number(arg.roomConfig.numberOfPlayers)
+                    }
+                }
+                else {
+                    const roomExists = Object.hasOwn(rooms, arg.roomConfig.room);
+                    if (!roomExists) {
+                        socket.emit(serverEvents.ROOM_NOT_FOUND);
+                        socket.disconnect();
+                        return;
+                    }
+                    roomId = arg.roomConfig.room;
+                }
+                const newUser = {login: arg.login, socket: socket, id: id, room: roomId};
+
+                newUser.socket.join(roomId);
+                let targetRoom = rooms[newUser.room];
+                targetRoom.users.push(newUser);
+                console.log(rooms);
+
+                socket.emit(serverEvents.ASSIGN_CREDENTIALS, {
                     playerId: id,
-                    playerColor: gameState.playerColors[gameState.users.length - 1],
-                    alreadyConnected: gameState.users.slice(0, -1).map(u => u.login)
+                    playerColor: targetRoom.playerColors[targetRoom.users.length - 1],
+                    alreadyConnected: targetRoom.users.slice(0, -1).map(u => u.login),
+                    roomConfig: {type: arg.roomConfig.type, room: roomId}
                 });
 
-                gameState.users.forEach(u => {
+                targetRoom.users.forEach(u => {
                     if (u.id !== newUser.id) {
-                        io.to(u.socket.id).emit('other_user_connected', newUser.login);
+                        io.to(u.socket.id).emit(serverEvents
+                            .OTHER_USER_CONNECTED, newUser.login);
                     }
                 })
 
-                gameState.gameStarted = (gameState.users.length === NUMBER_OF_PLAYERS);
+                targetRoom.gameStarted = (targetRoom.users.length === targetRoom.numberOfPlayers);
 
-                if (gameState.gameStarted) {
-                    initGameBoard(gameState);
-                    gameState.users.forEach(u => {
-                        u.socket.emit('game_started');
-                    });
-                    io.to(gameState.users[0].socket.id)
-                        .emit('set_player_turn', { isFirst: true });
+                if (targetRoom.gameStarted) {
+                    initGameBoard(targetRoom);
+                    io.to(targetRoom.roomId).emit(serverEvents.GAME_STARTED);
+                    io.to(targetRoom.users[0].socket.id)
+                        .emit(serverEvents.SET_PLAYER_TURN, { isFirst: true });
                 }
             }
         }
-        console.log(gameState.users.map(u => {
-            return { login: u.login, id: u.id };
-        }));
+        if (targetRoom !== undefined)
+            console.log(targetRoom.users.map(u => {
+                return { login: u.login, id: u.id, room: u.room };
+            }));
     });
 
     socket.on('played_turn', (arg) => {
-        gameState.users.forEach(u => {
+        const room = rooms[arg.room];
+        room.users.forEach(u => {
             if (arg.playerId !== u.id) {
-                io.to(u.socket.id).emit('other_player_played', arg);
+                io.to(u.socket.id).emit(serverEvents.OTHER_PLAYER_PLAYED, arg);
             }
         });
 
-        let tile = gameState.board[arg.x * gameState.dimension + arg.y];
+        let tile = room.board[arg.x * room.dimension + arg.y];
         tile.played = true;
         tile.playerColor = arg.color;
         tile.card = arg.card;
 
-        const won = checkWin(arg.color);
+        const won = checkWin(room, arg.color);
         if (won) {
-            let winner = gameState.users.find(u => u.id === arg.playerId.toString());
-            io.to(winner.socket.id).emit('has_won');
+            let winner = room.users.find(u => u.id === arg.playerId.toString());
+            io.to(winner.socket.id).emit(serverEvents.HAS_WON);
 
-            gameState.users.forEach(u => {
+            room.users.forEach(u => {
                 if (u.id !== winner.id) {
-                    io.to(u.socket.id).emit('has_lost', winner.login);
+                    io.to(u.socket.id).emit(serverEvents.HAS_LOST, winner.login);
                 }
             })
 
-            gameState.gameStarted = false;
+            room.gameStarted = false;
         }
         else {
-            gameState.turn = (gameState.turn + 1) % NUMBER_OF_PLAYERS;
-            io.to(gameState.users[gameState.turn].socket.id)
-                .emit('set_player_turn', { isFirst: false });
+            room.turn = (room.turn + 1) % room.numberOfPlayers;
+            io.to(room.users[room.turn].socket.id)
+                .emit(serverEvents.SET_PLAYER_TURN, { isFirst: false });
+
+            io.to(arg.room).emit(serverEvents.WAITING_FOR_PLAYER_TO_PLAY,
+               room.users[room.turn].login);
         }
     });
 
-    socket.on('prepare_for_new_game', () => {
-        initGameBoard(gameState);
-        gameState.turn = 0;
-        gameState.gameStarted = true;
-        io.emit('reset_game_values');
-        gameState.users.forEach(u => {
-            u.socket.emit('game_started');
+    socket.on('prepare_for_new_game', (arg) => {
+        let room = rooms[arg.room];
+        initGameBoard(room);
+        room.turn = 0;
+        room.gameStarted = true;
+        io.emit(serverEvents.RESET_GAME_VALUES);
+        room.users.forEach(u => {
+            u.socket.emit(serverEvents.GAME_STARTED);
         });
-        io.to(gameState.users[0].socket.id)
-            .emit('set_player_turn', { isFirst: true });
+        io.to(room.users[0].socket.id)
+            .emit(serverEvents.SET_PLAYER_TURN, { isFirst: true });
     });
 });
 
-server.listen(3000, () => {
-    console.log('listening...');
+server.listen(3000, "0.0.0.0", () => {
+    console.log('listening')
 });

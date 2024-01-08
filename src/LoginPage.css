@@ -13,3 +13,51 @@
 .login-page button {
     width: fit-content;
 }
+
+.join-room {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: fit-content;
+}
+
+.join-room input {
+    max-width: 70%;
+}
+
+.vertical-divider {
+    /*border-left: 1px solid #7b7bea;*/
+    margin-left: 1em;
+    margin-right: 1em;
+    max-height: 90%;
+    display: flex;
+    align-items: center;
+}
+
+.room-selector {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.create-room {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.create-room input {
+    width: 90%;
+}
+
+.create-room span {
+    padding: 0.2em;
+}
+
+.login-enter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}

@@ -4,7 +4,7 @@ export default function PlayAgainButton({ state, dispatch }) {
     const onClick = () => {
         dispatch({ type: 'play_again' });
         console.log(state.gameIsOn);
-        socket.emit('prepare_for_new_game');
+        socket.emit('prepare_for_new_game', { room: state.roomConfig.room });
     }
     return (
         <div className='play-again-button' hidden={state.gameIsOn}>

@@ -6,14 +6,14 @@ import PlayAgainButton from "./PlayAgainButton.jsx";
 
 export default function GamePage({ login, state, dispatch }) {
     return (
-        <div className='main'>
+        <div className='game-page'>
             <div className="game-view">
+                <PlayersDisplay state={state}/>
                 <label className='login-label'>{login}</label>
                 <Board state={state} dispatch={dispatch}/>
                 <RandomDice state={state} dispatch={dispatch} />
                 <PlayAgainButton state={state} dispatch={dispatch}/>
             </div>
-            <PlayersDisplay state={state}/>
         </div>
     )
 }

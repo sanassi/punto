@@ -3,14 +3,19 @@ import './PlayersDisplay.css';
 export default function PlayersDisplay({ state }) {
     return (
         <div className='players-display'>
-            <label>Connected:</label>
-            <ul>
+            <label className='room-label'>Room #{state.roomConfig.room}</label>
+            <div className='other-players'>
                 {
                     state.otherPlayers.map(p => {
-                        return <li key={`li-${p}`}>{p}</li>
+                        return (
+                           <label key={`li-${p}`}
+                                   className={` other-players-label ${state.currentPlayerPlaying === p ? 'current-playing' : ''}`}>
+                           {p}
+                        </label>
+                        )
                     })
                 }
-            </ul>
+            </div>
         </div>
     );
 }

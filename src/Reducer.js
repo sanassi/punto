@@ -53,12 +53,13 @@ export function reducer(state, action) {
                 )
             };
         case 'assign_credentials':
-            console.log(action.payload.alreadyConnected);
+            console.log(action.payload);
             return {
                 ...state,
                 id: action.payload.playerId,
                 color: action.payload.playerColor,
-                otherPlayers: action.payload.alreadyConnected
+                otherPlayers: action.payload.alreadyConnected,
+                roomConfig: action.payload.roomConfig
             };
         case 'set_player_turn':
             return {
@@ -104,7 +105,19 @@ export function reducer(state, action) {
                 ...state,
                 card: firstCard,
                 board: newBoard,
+                gameIsOn: true,
                 remainingCards: initialCards
+            };
+        case 'create_or_join_room':
+            console.log(action.payload)
+            return {
+                ...state,
+                roomConfig: action.payload
+            };
+        case 'waiting_for_player_to_play':
+            return  {
+                ...state,
+                currentPlayerPlaying: action.payload
             };
         default:
             throw Error('Unknown action.');

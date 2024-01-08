@@ -13,6 +13,7 @@ function App() {
     const [state, dispatch] = useReducer(reducer,
         {
             id: '',
+            roomConfig: {},
             login: login,
             card: 1,
             color: '#0b6c0b',
@@ -22,7 +23,8 @@ function App() {
             otherPlayers: [],
             isFirst: false,
             dimension: 6,
-            gameIsOn: true
+            gameIsOn: true,
+            currentPlayerPlaying: ''
         },
         (initial) => {
             let initialCards = initCards(6, 3);
@@ -30,6 +32,7 @@ function App() {
             initialCards.splice(-1);
             return {
                 id: '',
+                roomConfig: initial.roomConfig,
                 login: initial.login,
                 board: initBoard(6, initial.color),
                 card: firstCard,
@@ -39,7 +42,8 @@ function App() {
                 otherPlayers: initial.otherPlayers,
                 isFirst: initial.isFirst,
                 dimension: initial.dimension,
-                gameIsOn: initial.gameIsOn
+                gameIsOn: initial.gameIsOn,
+                currentPlayerPlaying: initial.currentPlayerPlaying
             };
         });
 
@@ -48,7 +52,10 @@ function App() {
             console.log('loggedIn');
             setLogged(true);
             state.login = login
-            socket.emit('new_connection', login);
+            socket.emit('new_connection', {
+                login: login,
+                roomConfig: state.roomConfig
+            });
         }
 
         function onDisconnect() {
@@ -71,6 +78,8 @@ function App() {
         }
 
         function onAssignCredentials(arg) {
+            console.log('arg:')
+            console.log(arg);
             dispatch({
                 type: 'assign_credentials',
                 payload: arg
@@ -110,8 +119,27 @@ function App() {
             })
         }
 
+        function onGameStarted() {
+            console.log('starting the game!');
+        }
+
+        function onRoomNotFound() {
+            console.log('room not found.. :/');
+            setLogged(false);
+            setLogin('');
+        }
+
+        function onWaitingForOtherPlayerToPlay(arg) {
+            console.log(arg);
+            dispatch({
+                type: 'waiting_for_player_to_play',
+                payload: arg
+            });
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
+        socket.on('game_started', onGameStarted);
         socket.on('login_already_taken', onDisconnect);
         socket.on('no_more_space', onNoMoreSpace);
         socket.on('other_player_played', onOtherPlayed);
@@ -121,10 +149,14 @@ function App() {
         socket.on('has_won', onHasWon);
         socket.on('other_user_connected', onOtherUserConnected);
         socket.on('reset_game_values', onResetGameValues);
+        socket.on('room_not_found', onRoomNotFound);
+        socket.on('waiting_for_player_to_play',
+           onWaitingForOtherPlayerToPlay);
 
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
+            socket.off('game_started', onGameStarted);
             socket.off('login_already_taken', onDisconnect);
             socket.off('no_more_space', onNoMoreSpace);
             socket.off('other_player_played', onOtherPlayed);
@@ -134,16 +166,28 @@ function App() {
             socket.off('has_won', onHasWon);
             socket.off('other_user_connected', onOtherUserConnected);
             socket.off('reset_game_values', onResetGameValues);
+            socket.off('room_not_found', onRoomNotFound);
+            socket.off('waiting_for_player_to_play',
+               onWaitingForOtherPlayerToPlay);
         }
     }, [login, state]);
 
-    return logged ? <GamePage login={login}
-                              state={state}
-                              dispatch={dispatch}/> :
-        <LoginPage
-            setLogged={setLogged}
-            setLogin={setLogin}
-        />;
+    return (
+        <div className='main'>
+            {
+                logged ? <GamePage login={login}
+                                   state={state}
+                                   dispatch={dispatch}/> :
+                    <LoginPage
+                        state={state}
+                        dispatch={dispatch}
+                        setLogged={setLogged}
+                        setLogin={setLogin}
+                    />
+            }
+            <footer>Built by Sanassi Cissé</footer>
+        </div>
+    )
 }
 
 export default App

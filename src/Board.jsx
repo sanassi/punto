@@ -23,6 +23,10 @@ export default function Board({state, dispatch}) {
         clickedTilePos.y = Math.floor(clickedTilePos.y / (boardDimensions.height / state.dimension));
 
         // TODO: check if the card can be placed here (ie. if there is a card around x,y)
+        /*
+        Also: check if the player still has cards that can be placed
+        if not: emit a skipped turn message to the server
+         */
 
         function thereIsACardIsNear(x, y) {
             for (let i = -1; i <= 1; i++) {
@@ -52,7 +56,8 @@ export default function Board({state, dispatch}) {
                 color: state.color,
                 card: state.card,
                 playerId: state.id,
-                login: state.login
+                login: state.login,
+                room: state.roomConfig.room
             });
 
             dispatch({type: 'select_new_card'});

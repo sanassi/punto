@@ -1,9 +1,22 @@
 .players-display {
-    align-items: center;
+    display: flex;
+}
+.room-label {
+    font-size: 20px;
+    margin-right: 1em;
 }
 
-.players-display ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
+.other-players {
+    display: flex;
+    flex-direction: row;
+}
+
+.other-players-label {
+    align-items: center;
+    margin: 0.2em;
+    display: flex;
+}
+
+.current-playing {
+    color: #646cff;
 }
