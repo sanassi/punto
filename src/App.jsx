@@ -172,15 +172,22 @@ function App() {
         }
     }, [login, state]);
 
-    return logged ? <GamePage login={login}
-                              state={state}
-                              dispatch={dispatch}/> :
-        <LoginPage
-            state={state}
-            dispatch={dispatch}
-            setLogged={setLogged}
-            setLogin={setLogin}
-        />;
+    return (
+        <div className='main'>
+            {
+                logged ? <GamePage login={login}
+                                   state={state}
+                                   dispatch={dispatch}/> :
+                    <LoginPage
+                        state={state}
+                        dispatch={dispatch}
+                        setLogged={setLogged}
+                        setLogin={setLogin}
+                    />
+            }
+            <footer>Built by Sanassi Cissé</footer>
+        </div>
+    )
 }
 
 export default App
