@@ -1,6 +1,7 @@
 import './LoginPage.css';
 import {useState} from "react";
 import { socket } from '../socket.js';
+import PuntoLogo from "./PuntoLogo.jsx";
 
 export default function LoginPage({ state, dispatch, setLogged, setLogin }) {
     const [tempLogin, updateTempLogin] = useState('');
@@ -50,6 +51,7 @@ export default function LoginPage({ state, dispatch, setLogged, setLogin }) {
 
     return (
         <div className='login-page'>
+            <PuntoLogo/>
             {joinRoom ? joinRoomComponent : (createRoom ? createRoomComponent : roomSelector)}
             <div className='login-enter'>
                 <label>Enter a login</label>
